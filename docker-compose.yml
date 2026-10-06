@@ -1,0 +1,33 @@
+name: superset-0221
+
+services:
+  superset:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: superset-0221-lab:0.22.1
+    platform: linux/amd64
+    entrypoint: ["/bin/sh", "/opt/superset/entrypoint.sh"]
+    environment:
+      SUPERSET_HOME: /var/lib/superset
+      SUPERSET_CONFIG_PATH: /etc/superset/superset_config.py
+      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:?Set SUPERSET_SECRET_KEY in .env}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Set ADMIN_PASSWORD in .env}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@example.com}
+    ports:
+      - "127.0.0.1:${PORT:-8088}:8088"
+    volumes:
+      - superset_data:/var/lib/superset
+      - ./superset_config.py:/etc/superset/superset_config.py:ro
+      - ./entrypoint.sh:/opt/superset/entrypoint.sh:ro
+      - ./initialize.py:/opt/superset/initialize.py:ro
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "--silent", "http://127.0.0.1:8088/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 60s
+
+volumes:
+  superset_data:
